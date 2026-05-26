@@ -17,6 +17,11 @@ type cursorPayload struct {
 	Status         string   `json:"status"`
 }
 
+var (
+	sendForHook = notify.SendForHookWithResult
+	sendAuto    = notify.SendAutoWithResult
+)
+
 func RunCursor(r io.Reader, cfg config.Config, event string, _ io.Writer) error {
 	var payload cursorPayload
 	fromHook := !isInteractiveStdin(r)
@@ -50,9 +55,9 @@ func RunCursor(r io.Reader, cfg config.Config, event string, _ io.Writer) error 
 	var result notify.SendResult
 	var err error
 	if fromHook {
-		result, err = notify.SendForHookWithResult(cfg.Notify.Protocol, title, body)
+		result, err = sendForHook(cfg.Notify.Protocol, title, body)
 	} else {
-		result, err = notify.SendAutoWithResult(cfg.Notify.Protocol, title, body)
+		result, err = sendAuto(cfg.Notify.Protocol, title, body)
 	}
 	if err != nil {
 		logx.Append("hook cursor event=%s send FAILED: %v", event, err)

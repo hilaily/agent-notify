@@ -10,6 +10,7 @@ import (
 )
 
 func TestCursorStopHookDisabled(t *testing.T) {
+	stubCursorSend(t)
 	cfg := config.Default()
 	cfg.Events.Stop = false
 	err := RunCursor(bytes.NewReader([]byte(`{"workspace_roots":["/tmp/proj"]}`)), cfg, "stop", &bytes.Buffer{})
