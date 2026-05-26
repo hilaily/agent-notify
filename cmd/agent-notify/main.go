@@ -39,6 +39,8 @@ func run(cmd string, args []string) error {
 		return cmdDoctor()
 	case "logs":
 		return cmdLogs(args)
+	case "version", "-V":
+		return cmdVersion()
 	case "help", "-h", "--help":
 		printUsage()
 		return nil
@@ -200,6 +202,7 @@ Commands:
   test cursor [--try-all]
   test claude [--apply]
   logs [--tail 30]
+  version
   doctor
 `)
 }

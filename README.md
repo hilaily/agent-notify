@@ -98,4 +98,20 @@ agent-notify test claude --apply
 ```bash
 make test
 make build
+make cross VERSION=v0.1.0   # 本地交叉编译
+agent-notify version
 ```
+
+## CI / Release
+
+推送 `main` 分支或 `v*` tag 时，GitHub Actions 会构建并上传以下产物：
+
+- `agent-notify-<version>_linux_amd64.tar.gz`
+- `agent-notify-<version>_linux_arm64.tar.gz`
+- `agent-notify-<version>_darwin_amd64.tar.gz`
+- `agent-notify-<version>_darwin_arm64.tar.gz`
+
+- **tag 发布**（如 `v0.1.0`）：版本号为 tag 名，并自动创建 GitHub Release
+- **main 分支**：版本号为 `dev-<git-sha>`
+
+每个压缩包内含二进制和 `.sha256` 校验文件。
