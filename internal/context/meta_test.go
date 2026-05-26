@@ -3,7 +3,7 @@ package context
 import "testing"
 
 func TestRenderTitle(t *testing.T) {
-	meta := Meta{Agent: "Cursor", Context: "myapp"}
+	meta := Meta{Agent: "Cursor", CWD: "/home/user/code/myapp"}
 	got := Render("{agent} — {context}", meta)
 	want := "Cursor — myapp"
 	if got != want {
@@ -13,14 +13,14 @@ func TestRenderTitle(t *testing.T) {
 
 func TestContextFromCWD(t *testing.T) {
 	meta := Meta{Agent: "Claude", CWD: "/home/user/code/myapp"}
-	if meta.ResolveContext("") != "myapp" {
-		t.Fatalf("got %q", meta.ResolveContext(""))
+	if meta.ResolveContext() != "myapp" {
+		t.Fatalf("got %q", meta.ResolveContext())
 	}
 }
 
-func TestContextPrefersWindow(t *testing.T) {
-	meta := Meta{Agent: "Claude", CWD: "/home/user/code/myapp"}
-	if meta.ResolveContext("tmux-win") != "tmux-win" {
-		t.Fatalf("expected window name")
+func TestContextExplicitOverride(t *testing.T) {
+	meta := Meta{Agent: "Claude", CWD: "/home/user/code/myapp", Context: "custom"}
+	if meta.ResolveContext() != "custom" {
+		t.Fatalf("expected explicit context override")
 	}
 }

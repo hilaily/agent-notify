@@ -2,7 +2,6 @@ package context
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -15,16 +14,13 @@ type Meta struct {
 }
 
 func Render(tmpl string, m Meta) string {
-	ctx := m.ResolveContext(m.Context)
+	ctx := m.ResolveContext()
 	out := strings.ReplaceAll(tmpl, "{agent}", m.Agent)
 	out = strings.ReplaceAll(out, "{context}", ctx)
 	return out
 }
 
-func (m Meta) ResolveContext(window string) string {
-	if window != "" {
-		return window
-	}
+func (m Meta) ResolveContext() string {
 	if m.Context != "" {
 		return m.Context
 	}
@@ -36,17 +32,6 @@ func (m Meta) ResolveContext(window string) string {
 		return "unknown"
 	}
 	return filepath.Base(cwd)
-}
-
-func TmuxWindowName() string {
-	if os.Getenv("TMUX") == "" {
-		return ""
-	}
-	out, err := exec.Command("tmux", "display-message", "-p", "#{window_name}").Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
 }
 
 func MetaFromEnv(agent, event string) Meta {
@@ -61,9 +46,8 @@ func MetaFromEnv(agent, event string) Meta {
 		event = e
 	}
 	return Meta{
-		Agent:   agent,
-		CWD:     cwd,
-		Context: TmuxWindowName(),
-		Event:   event,
+		Agent: agent,
+		CWD:   cwd,
+		Event: event,
 	}
 }

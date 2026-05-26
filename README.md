@@ -29,7 +29,11 @@ go install ./cmd/agent-notify
 ```bash
 agent-notify install --all
 agent-notify doctor
-agent-notify test
+
+# 两种测试路径（与 hook 发送方式一致）
+agent-notify test cursor          # 始终会在 stderr 打印发送结果
+agent-notify test cursor -v       # 同上（-v 保留兼容）
+agent-notify test cursor --try-all  # 逐个尝试所有投递方式（调试用）
 ```
 
 配置文件：`~/.config/agent-notify/config.toml`
@@ -42,7 +46,7 @@ tool = false  # shell/工具执行结束
 
 [notify]
 protocol = "osc777"
-title_template = "{agent} — {context}"
+title_template = "{agent} — {context}"  # context = 工作目录名
 body_stop = "等待输入"
 ```
 
@@ -52,7 +56,8 @@ body_stop = "等待输入"
 agent-notify send --event stop
 agent-notify hook cursor stop    # Cursor CLI stop hook
 agent-notify hook claude stop    # Claude Stop hook（输出 terminalSequence JSON）
-agent-notify test
+agent-notify test cursor [-v]
+agent-notify test claude [--apply]
 agent-notify doctor
 agent-notify install --all [--force]
 ```
@@ -68,17 +73,17 @@ agent-notify install --all [--force]
 
 ```bash
 # 1. 无 tmux（Ghostty 直接）
-agent-notify test
+agent-notify test cursor
 
 # 2. 本地 tmux
-tmux new-session -d 'agent-notify test'
+tmux new-session -d 'agent-notify test cursor -v'
 
 # 3. 远程 tmux（SSH 到远程后在 tmux 内）
-agent-notify test
+agent-notify test cursor -v
+# 应看到 delivery=passthrough-stdout
 
-# 4. 嵌套 tmux（本地 tmux → SSH → 远程 tmux）
-# 确保两层 tmux 都设置了 allow-passthrough on
-agent-notify test
+# 4. Claude 路径
+agent-notify test claude --apply
 ```
 
 ## 工作原理

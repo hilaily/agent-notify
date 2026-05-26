@@ -24,6 +24,10 @@ func TestMergeCursorHooks(t *testing.T) {
 	if len(stop) != 1 {
 		t.Fatalf("expected stop hook added")
 	}
+	resp := hooks["afterAgentResponse"].([]any)
+	if len(resp) != 1 {
+		t.Fatalf("expected afterAgentResponse hook added")
+	}
 }
 
 func TestMergeCursorHooksNoOverwrite(t *testing.T) {

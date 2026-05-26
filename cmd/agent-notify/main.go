@@ -9,6 +9,7 @@ import (
 	"github.com/longbin/agent-notify/internal/context"
 	"github.com/longbin/agent-notify/internal/hook"
 	"github.com/longbin/agent-notify/internal/install"
+	"github.com/longbin/agent-notify/internal/logx"
 	"github.com/longbin/agent-notify/internal/notify"
 	"github.com/longbin/agent-notify/internal/tmux"
 )
@@ -33,9 +34,11 @@ func run(cmd string, args []string) error {
 	case "install":
 		return cmdInstall(args)
 	case "test":
-		return cmdTest()
+		return cmdTest(args)
 	case "doctor":
 		return cmdDoctor()
+	case "logs":
+		return cmdLogs(args)
 	case "help", "-h", "--help":
 		printUsage()
 		return nil
@@ -80,7 +83,7 @@ func cmdHook(args []string) error {
 	case "claude":
 		return hook.RunClaude(os.Stdin, cfg, event, os.Stdout)
 	default:
-		return fmt.Errorf("unknown agent %q", agent)
+		return fmt.Errorf("unknown agent %q (use cursor stop|response|tool or claude stop|idle)", agent)
 	}
 }
 
@@ -95,14 +98,79 @@ func cmdInstall(args []string) error {
 	return fmt.Errorf("use --all")
 }
 
-func cmdTest() error {
-	return notify.TestNotification("agent-notify", "测试通知 — 如果你看到这条，说明配置正确")
+func cmdTest(args []string) error {
+	mode := "cursor"
+	apply := false
+	tryAll := false
+
+	for _, arg := range args {
+		switch arg {
+		case "-v", "--verbose":
+			// accepted for compatibility; status always prints to stderr now
+		case "--apply":
+			apply = true
+		case "--try-all":
+			tryAll = true
+		case "cursor", "claude":
+			mode = arg
+		case "help", "-h", "--help":
+			fmt.Fprint(os.Stderr, `Usage: agent-notify test [cursor|claude] [flags]
+
+Flags:
+  --apply     Claude only: emit terminalSequence to terminal
+  --try-all   Cursor only: try every delivery method (debug)
+
+Examples:
+  agent-notify test cursor
+  agent-notify test cursor -v
+  agent-notify test cursor --try-all
+  agent-notify test claude --apply
+`)
+			return nil
+		default:
+			return fmt.Errorf("unknown test argument %q (try: agent-notify test help)", arg)
+		}
+	}
+
+	switch mode {
+	case "cursor":
+		_, err := notify.TestCursor("", "", tryAll)
+		return err
+	case "claude":
+		_, err := notify.TestClaude("", "", apply, os.Stdout)
+		return err
+	default:
+		return fmt.Errorf("usage: agent-notify test [cursor|claude] [--apply] [--try-all]")
+	}
+}
+
+func cmdLogs(args []string) error {
+	fs := flag.NewFlagSet("logs", flag.ExitOnError)
+	tail := fs.Int("tail", 30, "number of recent lines")
+	_ = fs.Parse(args)
+
+	lines, err := logx.Tail(*tail)
+	if err != nil {
+		return err
+	}
+	if len(lines) == 0 {
+		fmt.Printf("no log entries yet (log file: %s)\n", logx.Path())
+		return nil
+	}
+	fmt.Printf("# %s\n", logx.Path())
+	for _, line := range lines {
+		fmt.Println(line)
+	}
+	return nil
 }
 
 func cmdDoctor() error {
 	fmt.Println("agent-notify doctor")
 	if tmux.InTmux() {
 		fmt.Println("✓ running inside tmux")
+		if tmux.IsSSHSession() {
+			fmt.Println("✓ SSH session detected (prefers passthrough delivery)")
+		}
 		ok, val, err := tmux.AllowPassthroughEnabled()
 		if err != nil {
 			fmt.Printf("✗ allow-passthrough check failed: %v\n", err)
@@ -118,6 +186,7 @@ func cmdDoctor() error {
 	}
 	cfgPath := config.DefaultPath()
 	fmt.Printf("  config=%s\n", cfgPath)
+	fmt.Printf("  hook_log=%s\n", logx.Path())
 	return nil
 }
 
@@ -125,10 +194,12 @@ func printUsage() {
 	fmt.Fprint(os.Stderr, `Usage: agent-notify <command>
 Commands:
   send [--title T] [--body B] [--event stop|idle|tool]
-  hook cursor stop|tool
+  hook cursor stop|response|tool
   hook claude stop|idle
   install [--all] [--force]
-  test
+  test cursor [--try-all]
+  test claude [--apply]
+  logs [--tail 30]
   doctor
 `)
 }

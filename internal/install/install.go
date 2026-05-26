@@ -8,7 +8,8 @@ import (
 	"github.com/longbin/agent-notify/internal/config"
 )
 
-const cursorHookCmd = "agent-notify hook cursor stop"
+const cursorStopCmd = "agent-notify hook cursor stop"
+const cursorResponseCmd = "agent-notify hook cursor response"
 const cursorToolCmd = "agent-notify hook cursor tool"
 const claudeStopCmd = "agent-notify hook claude stop"
 const claudeIdleCmd = "agent-notify hook claude idle"
@@ -31,7 +32,8 @@ func MergeCursorHooks(path string, force bool) error {
 		hooks = map[string]any{}
 		doc["hooks"] = hooks
 	}
-	addHook(hooks, "stop", cursorHookCmd, force)
+	addHook(hooks, "stop", cursorStopCmd, force)
+	addHook(hooks, "afterAgentResponse", cursorResponseCmd, force)
 	cfg, _ := config.LoadDefault()
 	if cfg.Events.Tool {
 		addHook(hooks, "afterShellExecution", cursorToolCmd, force)

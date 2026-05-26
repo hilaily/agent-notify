@@ -14,9 +14,10 @@ type Config struct {
 }
 
 type Events struct {
-	Stop bool `toml:"stop"`
-	Idle bool `toml:"idle"`
-	Tool bool `toml:"tool"`
+	Stop     bool `toml:"stop"`
+	Response bool `toml:"response"`
+	Idle     bool `toml:"idle"`
+	Tool     bool `toml:"tool"`
 }
 
 type Notify struct {
@@ -29,7 +30,7 @@ type Notify struct {
 
 func Default() Config {
 	return Config{
-		Events: Events{Stop: true, Idle: false, Tool: false},
+		Events: Events{Stop: true, Response: true, Idle: false, Tool: false},
 		Notify: Notify{
 			Protocol:      "osc777",
 			TitleTemplate: "{agent} — {context}",
@@ -66,6 +67,8 @@ func (c Config) EventEnabled(event string) bool {
 	switch strings.ToLower(event) {
 	case "stop":
 		return c.Events.Stop
+	case "response":
+		return c.Events.Response
 	case "idle":
 		return c.Events.Idle
 	case "tool":

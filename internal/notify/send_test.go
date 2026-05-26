@@ -32,6 +32,7 @@ func TestSendTmuxUsesPassthroughWhenNoTTY(t *testing.T) {
 		InTmux:    true,
 		Layers:    1,
 		ClientTTY: "",
+		Method:    MethodPassthroughStdout,
 	})
 	if err != nil {
 		t.Fatal(err)
