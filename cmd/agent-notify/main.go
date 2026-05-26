@@ -39,6 +39,8 @@ func run(cmd string, args []string) error {
 		return cmdDoctor()
 	case "logs":
 		return cmdLogs(args)
+	case "inbox":
+		return cmdInbox(args, os.Stdout, os.Stderr)
 	case "version", "-V":
 		return cmdVersion()
 	case "help", "-h", "--help":
@@ -202,6 +204,7 @@ Commands:
   test cursor [--try-all]
   test claude [--apply]
   logs [--tail 30]
+  inbox <list|show|done|rm|clear|serve|ssh-config>
   version
   doctor
 `)

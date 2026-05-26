@@ -53,5 +53,6 @@ func RunClaude(r io.Reader, cfg config.Config, event string, w io.Writer) error 
 		return err
 	}
 	logx.Append("hook claude event=%s terminalSequence OK title=%q", event, title)
+	recordInbox(cfg, "Claude", event, meta.CWD, title, body)
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Events Events `toml:"events"`
 	Notify Notify `toml:"notify"`
+	Inbox  Inbox  `toml:"inbox"`
 }
 
 type Events struct {
@@ -28,6 +29,15 @@ type Notify struct {
 	BodyTool      string `toml:"body_tool"`
 }
 
+type Inbox struct {
+	Enabled       bool   `toml:"enabled"`
+	Socket        string `toml:"socket"`
+	RemoteSocket  string `toml:"remote_socket"`
+	Addr          string `toml:"addr"`
+	FallbackLocal bool   `toml:"fallback_local"`
+	TimeoutMS     int    `toml:"timeout_ms"`
+}
+
 func Default() Config {
 	return Config{
 		Events: Events{Stop: true, Response: true, Idle: false, Tool: false},
@@ -38,7 +48,30 @@ func Default() Config {
 			BodyIdle:      "空闲 60s+，等待输入",
 			BodyTool:      "工具执行完成",
 		},
+		Inbox: Inbox{
+			Enabled:       true,
+			Socket:        DefaultInboxSocket(),
+			RemoteSocket:  DefaultInboxRemoteSocket(),
+			Addr:          "127.0.0.1:17777",
+			FallbackLocal: true,
+			TimeoutMS:     500,
+		},
 	}
+}
+
+func DefaultInboxRemoteSocket() string {
+	user := os.Getenv("USER")
+	if user == "" {
+		user = "user"
+	}
+	return filepath.Join("/tmp", "agent-notify-"+user+".sock")
+}
+
+func DefaultInboxSocket() string {
+	if runtimeDir := os.Getenv("XDG_RUNTIME_DIR"); runtimeDir != "" {
+		return filepath.Join(runtimeDir, "agent-notify.sock")
+	}
+	return filepath.Join(os.Getenv("HOME"), ".local", "state", "agent-notify", "agent-notify.sock")
 }
 
 func DefaultPath() string {

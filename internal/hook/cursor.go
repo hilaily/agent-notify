@@ -64,6 +64,7 @@ func RunCursor(r io.Reader, cfg config.Config, event string, _ io.Writer) error 
 		return err
 	}
 	logx.Append("hook cursor event=%s send OK via %s title=%q", event, result.Method, title)
+	recordInbox(cfg, "Cursor", event, meta.CWD, title, body)
 	return nil
 }
 

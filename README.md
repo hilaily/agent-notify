@@ -48,6 +48,14 @@ tool = false  # shell/工具执行结束
 protocol = "osc777"
 title_template = "{agent} — {context}"  # context = 工作目录名
 body_stop = "等待输入"
+
+[inbox]
+enabled = true
+socket = "/run/user/1000/agent-notify.sock"
+remote_socket = "/tmp/agent-notify-longbin.sock"
+addr = "127.0.0.1:17777"
+fallback_local = true
+timeout_ms = 500
 ```
 
 ## 命令
@@ -56,10 +64,43 @@ body_stop = "等待输入"
 agent-notify send --event stop
 agent-notify hook cursor stop    # Cursor CLI stop hook
 agent-notify hook claude stop    # Claude Stop hook（输出 terminalSequence JSON）
+agent-notify inbox serve         # 本地接收远程通知记录
+agent-notify inbox list          # 列出未处理通知
+agent-notify inbox show <id>
+agent-notify inbox done <id>
+agent-notify inbox tui           # Bubble Tea TUI
+agent-notify inbox ssh-config install  # 自动写 ~/.ssh/config RemoteForward
 agent-notify test cursor [-v]
 agent-notify test claude [--apply]
 agent-notify doctor
 agent-notify install --all [--force]
+```
+
+## 本地汇总 Inbox
+
+在本地 Ghostty 所在机器启动接收服务：
+
+```bash
+agent-notify inbox serve
+```
+
+让命令自动写 SSH `RemoteForward` 配置：
+
+```bash
+agent-notify inbox ssh-config install
+```
+
+命令会在 `~/.ssh/config` 写入一个托管块，并把写入内容打印出来。已有 SSH 连接需要重连后才会生效。
+
+默认写入的转发形式是：远程创建 `/tmp/agent-notify-$USER.sock`，转发到本地 `$XDG_RUNTIME_DIR/agent-notify.sock`。远程 hook 会尝试通过这个 SSH 反向转发把记录写回本地 inbox；如果本地接收服务不可用，会 fallback 写到远程机器自己的 `~/.local/state/agent-notify/inbox.jsonl`，避免丢记录。
+
+查看和处理：
+
+```bash
+agent-notify inbox list
+agent-notify inbox show <id>
+agent-notify inbox done <id>
+agent-notify inbox tui
 ```
 
 ## Hook 配置位置
